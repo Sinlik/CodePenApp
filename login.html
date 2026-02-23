@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RBS Code - Login</title>
+    <link rel="stylesheet" href="login.css"> <!-- Shared CSS if you have one -->
+</head>
+<body>
+    <div class="container">
+        <!-- Signup Form -->
+        <div id="signupForm" class="form-box">
+            <h2>Create Account</h2>
+            <form onsubmit="handleSignup(event)">
+                <div class="input-group">
+                    <input type="text" id="signupUsername" placeholder="Username" required>
+                    <span class="input-icon">👤</span>
+                </div>
+                <div class="input-group">
+                    <input type="email" id="signupEmail" placeholder="Email" required>
+                    <span class="input-icon">📧</span>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="signupPassword" placeholder="Password" required minlength="6">
+                    <span class="input-icon">🔒</span>
+                </div>
+                <div id="signupError" class="error"></div>
+                <button type="submit">Sign Up</button>
+                <div class="switch-link">
+                    Already have an account? <a href="#" onclick="showLogin()">Sign In</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Login Form -->
+        <div id="loginForm" class="form-box active">
+            <h2>Welcome Back</h2>
+            <form onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <input type="email" id="loginEmail" placeholder="Email" required>
+                    <span class="input-icon">📧</span>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="loginPassword" placeholder="Password" required>
+                    <span class="input-icon">🔒</span>
+                </div>
+                <div id="loginError" class="error"></div>
+                <button type="submit">Sign In</button>
+                <div class="switch-link">
+                    Don't have an account? <a href="#" onclick="showSignup()">Sign Up</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard">
+            <h2>Welcome, <span id="userName"></span>!</h2>
+            <p>You are successfully logged in.</p>
+            <button onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html>

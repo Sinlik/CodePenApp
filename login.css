@@ -1,0 +1,37 @@
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: Arial, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container { 
+            background: white; 
+            padding: 2rem; 
+            border-radius: 10px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            width: 100%; 
+            max-width: 400px; 
+        }
+        .form-box { 
+            display: none; 
+            animation: slideIn 0.3s ease; 
+        }
+        .form-box.active { display: block; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        h2 { text-align: center; margin-bottom: 2rem; color: #333; }
+        .input-group { position: relative; margin-bottom: 1.5rem; }
+        input { width: 100%; padding: 12px 45px 12px 15px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; transition: border-color 0.3s; }
+        input:focus { outline: none; border-color: #667eea; }
+        .input-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #666; }
+        button { width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
+        button:hover { background: #5a67d8; }
+        .switch-link { text-align: center; margin-top: 1rem; }
+        .switch-link a { color: #667eea; text-decoration: none; font-weight: bold; }
+        .error { color: #e53e3e; font-size: 14px; margin-top: 5px; display: none; }
+        .success { color: #38a169; font-size: 14px; margin-top: 5px; display: none; }
+        #dashboard { text-align: center; display: none; }
+        #logout { background: #e53e3e; margin-top: 1rem; }
+        #logout:hover { background: #c53030; }

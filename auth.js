@@ -20,15 +20,44 @@ function showLogin() {
     document.getElementById('loginForm').style.display = 'block';
 }
 
-function simpleHash(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
-    }
-    return hash.toString();
+async function saveProject() {
+ const { data: userData } = await supabase.auth.getUser();
+ const user = userData.user;
+
+ const projectData = {
+   user_id: user.id,
+   name: "default",
+   html: models.html.getValue(),
+   css: models.css.getValue(),
+   js: models.javascript.getValue(),
+   updated_at: new Date()
+ };
+
+ const { error } = await supabase
+   .from("projects")
+   .upsert(projectData, { onConflict: "user_id,name" });
+
+ if (error) console.error(error.message);
 }
+
+async function loadProject() {
+ const { data: userData } = await supabase.auth.getUser();
+ const user = userData.user;
+
+ const { data, error } = await supabase
+   .from("projects")
+   .select("*")
+   .eq("user_id", user.id)
+   .eq("name", "default")
+   .single();
+
+ if (data) {
+   models.html.setValue(data.html);
+   models.css.setValue(data.css);
+   models.javascript.setValue(data.js);
+ }
+}
+
 
 function handleSignup(event) {
     event.preventDefault();
@@ -47,8 +76,8 @@ function handleSignup(event) {
         return;
     }
 
-    const hashedPassword = simpleHash(password);
-    const newUser = { name, email, password: hashedPassword };
+    // const hashedPassword = simpleHash(password);
+    const newUser = { name, email, password: password};
     users.push(newUser);
     localStorage.setItem('users', JSON.stringify(users));
     
@@ -57,13 +86,30 @@ function handleSignup(event) {
     document.getElementById('signupPassword').value = '';
     
     showSuccess(errorEl, `Added "${name}"!`);
-    
-    // Redirect to product page after signup
-    setTimeout(() => {
-        window.location.href = 'product.html';
-    }, 1500);
+
 }
 
+// ✅ NEW LOGIN - Replace old login function
+async function login(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    console.error(error.message);
+    alert('Login failed: ' + error.message);
+    return;
+  }
+
+  showDashboard(data.user);
+}
+
+async function logout() {
+    await supabase.auth.signOut();
+    // Redirect or show login form
+    window.location.href = 'login.html';
+}
 function handleLogin(event) {
     event.preventDefault();
     const email = document.getElementById('loginEmail').value.trim();
@@ -72,8 +118,7 @@ function handleLogin(event) {
     errorEl.style.display = 'none';
 
     users = JSON.parse(localStorage.getItem('users')) || [];
-    const hashedPassword = simpleHash(password);
-    const user = users.find(u => u.email === email && u.password === hashedPassword);
+    const user = users.find(u => u.email === email && u.password === password);
     
     if (!user) {
         showError(errorEl, 'Invalid email or password');
@@ -82,11 +127,13 @@ function handleLogin(event) {
     
     localStorage.setItem('currentUser', JSON.stringify(user));
     showSuccess(errorEl, 'Login successful!');
-    
-    // Redirect to product page after login
+
+
+      // Redirect to product page after successful login
     setTimeout(() => {
         window.location.href = 'product.html';
     }, 1000);
+    
 }
 
 function logout() {
@@ -97,6 +144,13 @@ function logout() {
     document.getElementById('loginEmail').value = '';
     document.getElementById('loginPassword').value = '';
 }
+
+// document.addEventListener('DOMContentLoaded', async function() {
+//     const { data: { session } } = await supabase.auth.getSession();
+//     if (session && window.showDashboard) {
+//         showDashboard(session.user);
+//     }
+// });
 
 function showError(element, message) {
     element.textContent = message;

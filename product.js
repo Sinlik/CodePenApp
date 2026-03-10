@@ -1,4 +1,3 @@
-// product.js - DEBUG VERSION
 console.log("product.js loaded");
 
 function showDashboard(user) {
@@ -22,6 +21,9 @@ function showDashboard(user) {
     } else {
         console.log("ERROR: .spacer not found!");  // DEBUG
     }
+        spacer.onclick = function() {
+             window.location.href = "login.html";
+         };
 }
 
 // Check login on page load

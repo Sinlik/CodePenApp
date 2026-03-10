@@ -35,3 +35,49 @@
         #dashboard { text-align: center; display: none; }
         #logout { background: #e53e3e; margin-top: 1rem; }
         #logout:hover { background: #c53030; }
+
+        .overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.8);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.overlayCard {
+  background: white;
+  width: 95vw;
+  height: 95vh;
+  border-radius: 8px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.overlayTop {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#overlayFrame {
+  flex: 1;
+  width: 100%;
+  border: none;
+  border-radius: 0 0 8px 8px;
+}

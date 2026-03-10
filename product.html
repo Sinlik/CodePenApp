@@ -7,18 +7,23 @@
     <title>RBS Code Studio</title>
 </head>
 
+
 <body>
+
 
     <div class="wrap">
 
+
     <div class="topbar" id="topbar">
       <div class="brand">RBS Code</div>
-      <div class="spacer">Hello ${name}</div>
+      <button class="spacer">Hello ${name}</button>
       <button id="btnRun" class="primary">Run</button>
+      <button id="btnSave">Save</button>
       <button id="btnFull">Full Preview</button>
       <button id="btnDownloadHtml">Download HTML</button>
       <button id="btnDownloadZip">Download ZIP</button>
     </div>
+
 
     <div class="main">
       <div class="card">
@@ -32,6 +37,7 @@
         <div class="editorArea"><div id="editor"></div></div>
       </div>
 
+
       <div class="card">
         <div class="cardHead">Preview</div>
         <div class="previewArea">
@@ -40,193 +46,236 @@
       </div>
     </div>
 
+
     </div>
+
 
     <div id="overlay" class="overlay">
-      <div class="overlayCard">
-
-        <div class="overlayTop">
-          <div class="overlayTitle">
-            Full Preview
-            <span class="overlayHint">Press Esc to close</span>
-          </div>
-          <button id="btnCloseOverlay" class="overlayClose">✕</button>
-        </div>
-
-        <iframe id="overlayFrame" sandbox="allow-scripts"></iframe>
-
-      </div>
+  <div class="overlayCard">
+    <div class="overlayTop">
+      <div class="overlayTitle">Full Preview <span class="overlayHint">Press Esc to close</span></div>
+      <button id="btnCloseOverlay" class="overlayClose">✕</button>
     </div>
+    <iframe id="overlayFrame" sandbox="allow-scripts"></iframe>
+  </div>
+</div>
 
-<script src="auth.js"></script>
-<script src="product.js"></script>
 
-
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+ 
+<!-- Replace ALL your Monaco + studio scripts with this ONE block -->
 <script>
-(function(){
-const base="https://cdn.jsdelivr.net/npm/monaco-editor@0.47.0/min/";
-window.MonacoEnvironment={
-getWorkerUrl:function(){
-const workerMain=base+"vs/base/worker/workerMain.js";
-const code=`self.MonacoEnvironment={baseUrl:"${base}"};importScripts("${workerMain}");`;
-return URL.createObjectURL(new Blob([code],{type:"text/javascript"}));
-}};
-const req=document.createElement("script");
-req.src=base+"vs/loader.js";
-req.onload=()=>{
-require.config({paths:{vs:base+"vs"}});
-require(["vs/editor/editor.main"],initStudio);
-};
-document.head.appendChild(req);
+(function initMonaco() {
+  const base = "https://cdn.jsdelivr.net/npm/monaco-editor@0.47.0/min/";
+  window.MonacoEnvironment = {
+    getWorkerUrl: function() {
+      const workerMain = base + "vs/base/worker/workerMain.js";
+      const code = `self.MonacoEnvironment={baseUrl:"${base}"};importScripts("${workerMain}");`;
+      return URL.createObjectURL(new Blob([code], { type: "text/javascript" }));
+    }
+  };
+
+
+  const req = document.createElement("script");
+  req.src = base + "vs/loader.js";
+  req.onload = () => {
+    require.config({ paths: { vs: base + "vs" } });
+    require(["vs/editor/editor.main"], initStudio);  // ← function defined below
+  };
+  document.head.appendChild(req);
 })();
-</script>
 
-<script>
-const DEFAULT={
-    html:`<h1 id="hello">Hello RBS Code</h1>`,
-    css:`body{\n  font-family: Arial\n}`,
-    javascript:`console.log("Ready");`
+
+// ✅ ALL studio code goes HERE - after Monaco loader
+const DEFAULT = {
+  html: `<h1 id="hello">Hello RBS Code</h1>`,
+  css: `body{\n  font-family: Arial\n}`,
+  javascript: `console.log("Ready");`
 };
 
-let editor,models={},activeLang="html";
-const preview = document.getElementById("preview");
-const overlay = document.getElementById("overlay"); 
-const overlayFrame = document.getElementById("overlayFrame");
+
+let editor, models = {}, activeLang = "html";
+let preview, overlay, overlayFrame;
+  function registerHtmlSnippets() {
+    const tags = [
+      "html","head","body","title","meta",
+      "h1","h2","h3","p","div","span",
+      "a","img","button","ul","ol","li",
+      "section","header","footer","nav","main",
+      "form","label","input","textarea","br","hr"
+    ];
 
 
-function initStudio(){
-
-models.html=monaco.editor.createModel(DEFAULT.html,"html");
-models.css=monaco.editor.createModel(DEFAULT.css,"css");
-models.javascript=monaco.editor.createModel(DEFAULT.javascript,"javascript");
-
-editor=monaco.editor.create(document.getElementById("editor"),{
-model:models.html,
-theme:"vs-dark",
-fontSize:14,
-minimap:{enabled:false},
-automaticLayout:true,
-wordWrap:"on",
-snippetSuggestions:"top",
-wordBasedSuggestions:false
-});
-
-document.querySelectorAll(".tab").forEach(t=>{
-t.onclick=()=>{
-document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-t.classList.add("active");
-activeLang=t.dataset.lang;
-editor.setModel(models[activeLang]);
-};
-});
-
-registerHtmlSnippets();
-
-document.getElementById("btnRun").onclick=runCode;
-document.getElementById("btnFull").onclick=openOverlay;
-document.getElementById("btnDownloadHtml").onclick=downloadHtml;
-document.getElementById("btnDownloadZip").onclick=downloadZip;
-
-window.addEventListener("keydown",e=>{
-if(e.key==="Escape") closeOverlay();
-});
-}
-
-function registerHtmlSnippets(){
-const tags=[
-"html","head","body","title","meta",
-"h1","h2","h3","p","div","span",
-"a","img","button","ul","ol","li",
-"section","header","footer","nav","main",
-"form","label","input","textarea","br","hr"
-];
-
-monaco.languages.registerCompletionItemProvider("html",{
-provideCompletionItems:()=>({
-suggestions:tags.map(tag=>({
-label:tag,
-kind:monaco.languages.CompletionItemKind.Snippet,
-insertText:snippetFor(tag),
-insertTextRules:monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
-}))
-})
-});
-}
-
-function snippetFor(tag){
-if(tag==="meta") return `<meta charset="utf-8">`;
-if(tag==="img") return `<img src="$1" alt="$2">`;
-if(tag==="input") return `<input type="$1">`;
-if(tag==="br"||tag==="hr") return `<${tag}>`;
-return `<${tag}>$0</${tag}>`;
-}
-
-function buildHtml(){
-return `<!doctype html>
-<html>
-<head>
-<style>${models.css.getValue()}</style>
-</head>
-<body>
-${models.html.getValue()}
-<script>
-try{
-${models.javascript.getValue()}
-}catch(e){
-document.body.innerHTML+="<pre style='color:red'>"+e.message+"</pre>"
-}
-<\/script>
-</body>
-</html>`;
-}
-
-function runCode(){
-document.getElementById("preview").srcdoc=buildHtml();
-}
-function openOverlay(){
-  overlay.classList.add("show");
-
-  // Make sure preview has content
-  if(!preview.srcdoc){
-    const html = buildHtml();       
-    preview.srcdoc = html;
-    overlayFrame.srcdoc = html;
-  } else {
-    overlayFrame.srcdoc = preview.srcdoc;
+    monaco.languages.registerCompletionItemProvider("html", {
+      provideCompletionItems: () => ({
+        suggestions: tags.map(tag => ({
+          label: tag,
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText: snippetFor(tag),
+          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+        }))
+      })
+    });
   }
+
+  function runCode() {
+  preview.innerHTML = ""; 
+  const content = `
+    ${models.html.getValue()}
+    <style>${models.css.getValue()}</style>
+    <script>${models.javascript.getValue()}<\/script>
+  `;
+  preview.srcdoc = content;
+}
+
+function openOverlay() {
+  overlay.classList.add("show");
+  const content = `
+    ${models.html.getValue()}
+    <style>${models.css.getValue()}</style>
+    <script>${models.javascript.getValue()}<\/script>
+  `;
+  overlayFrame.srcdoc = content;
 }
 
 
-function closeOverlay(){
+  function snippetFor(tag) {
+    if (tag === "meta") return `<meta charset="utf-8">`;
+    if (tag === "img") return `<img src="$1" alt="$2">`;
+    if (tag === "input") return `<input type="$1">`;
+    if (tag === "br" || tag === "hr") return `<${tag}>`;
+    return `<${tag}>$0</${tag}>`;
+  }
+
+  function closeOverlay() {
     overlay.classList.remove("show");
-}
+  }
 
-function downloadHtml(){
-const blob=new Blob([buildHtml()],{type:"text/html"});
-download(blob,"project.html");
-}
 
-async function downloadZip(){
-const zip=new JSZip();
-zip.file("index.html",buildHtml());
-zip.file("style.css",models.css.getValue());
-zip.file("script.js",models.javascript.getValue());
-const blob=await zip.generateAsync({type:"blob"});
-download(blob,"project.zip");
-}
+  function downloadHtml() {
+    const blob = new Blob([buildHtml()], { type: "text/html" });
+    download(blob, "project.html");
+  }
 
-function download(blob,name){
-const a=document.createElement("a");
-const url=URL.createObjectURL(blob);
-a.href=url;
-a.download=name;
-a.click();
-URL.revokeObjectURL(url);
-}
+  async function downloadZip() {
+    const zip = new JSZip();
+    zip.file("index.html", buildHtml());
+    zip.file("style.css", models.css.getValue());
+    zip.file("script.js", models.javascript.getValue());
+    const blob = await zip.generateAsync({ type: "blob" });
+    download(blob, "project.zip");
+  }
 
-document.getElementById("btnCloseOverlay").onclick = closeOverlay;
+  function saveProject() {
+    // Get username from localStorage
+    const username = localStorage.getItem('currentUser');
+    if (!username) {
+        alert("Please log in first!");
+        return;
+    }
+    
+    // Get ALL users data (or start empty)
+    let allUsers = JSON.parse(localStorage.getItem('rbs-user-data') || '{}');
+    
+    // Save THIS user's project under their username
+    allUsers[username] = {
+        html: models.html.getValue(),
+        css: models.css.getValue(),
+        javascript: models.javascript.getValue()
+    };
+    
+    // Save all users back to localStorage
+    localStorage.setItem('rbs-user-data', JSON.stringify(allUsers));
+    alert(`Project saved for ${username}!`);
+  }
+
+  function loadProject() {
+    try {
+        const username = localStorage.getItem('currentUser');
+        if (!username || !models.html) return;
+        
+        const allUsers = JSON.parse(localStorage.getItem('rbs-user-data') || '{}');
+        const userProject = allUsers[username];
+        
+        if (userProject) {
+            models.html.setValue(userProject.html || DEFAULT.html);
+            models.css.setValue(userProject.css || DEFAULT.css);
+            models.javascript.setValue(userProject.javascript || DEFAULT.javascript);
+            console.log(`Loaded ${username}'s project!`);
+        }
+    } catch(e) {
+        console.error('Load failed:', e);
+    }
+
+  } 
+
+  // Already wired up in initStudio():
+  document.getElementById("btnFull").onclick = openOverlay;
+  document.getElementById("btnCloseOverlay").onclick = closeOverlay;
+  window.addEventListener("keydown", e => {
+    if (e.key === "Escape") closeOverlay();
+  });
+
+
+
+  function download(blob, name) {
+    const a = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    a.href = url;
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+function initStudio() {
+  preview = document.getElementById("preview");
+  overlay = document.getElementById("overlay");
+  overlayFrame = document.getElementById("overlayFrame");
+
+  // ✅ CREATE MODELS FIRST
+  models.html = monaco.editor.createModel(DEFAULT.html, "html");
+  models.css = monaco.editor.createModel(DEFAULT.css, "css");
+  models.javascript = monaco.editor.createModel(DEFAULT.javascript, "javascript");
+
+  // ✅ THEN LOAD SAVED PROJECT
+  loadProject();
+
+  editor = monaco.editor.create(document.getElementById("editor"), {
+    model: models.html,
+    theme: "vs-dark",
+    fontSize: 14,
+    minimap: { enabled: false },
+    automaticLayout: true,
+    wordWrap: "on",
+    snippetSuggestions: "top",
+    wordBasedSuggestions: false
+  });
+
+  // tabs
+  document.querySelectorAll(".tab").forEach(t => {
+    t.onclick = () => {
+      document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+      t.classList.add("active");
+      activeLang = t.dataset.lang;
+      editor.setModel(models[activeLang]);
+    };
+  });
+
+  registerHtmlSnippets();
+  
+  // Button handlers
+  document.getElementById("btnRun").onclick = runCode;
+  document.getElementById("btnSave").onclick = saveProject;
+  document.getElementById("btnFull").onclick = openOverlay;
+  document.getElementById("btnDownloadHtml").onclick = downloadHtml;
+  document.getElementById("btnDownloadZip").onclick = downloadZip;
+  document.getElementById("btnCloseOverlay").onclick = closeOverlay;
+  
+  window.addEventListener("keydown", e => {
+    if (e.key === "Escape") closeOverlay();
+  });
+}
 
 </script>
+<script src="product.js"></script>
 </body>
 </html>

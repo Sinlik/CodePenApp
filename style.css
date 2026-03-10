@@ -41,6 +41,13 @@ body{
 
 .spacer{flex:1}
 
+.spacer {
+  font-weight:800;
+  padding:8px 12px;
+  border-radius:12px;
+  background:linear-gradient(135deg,var(--a1),var(--a2));
+}
+
 button{
   border:none;
   padding:9px 12px;
